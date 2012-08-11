@@ -31,15 +31,42 @@ usage (void)
 }
 
 void
+cleanup_clients (void)
+{
+	struct client *cp, *ncp;
+
+	for (cp = client_head.next, ncp = cp->next;
+	     cp != &client_head;
+	     cp = ncp, ncp = cp->next) {
+		if (cp->kill) {
+			fprintf (stderr, "killing client\n");
+			close (cp->fd);
+			cp->prev->next = cp->next;
+			cp->next->prev = cp->prev;
+			free (cp);
+		}
+	}
+}
+
+void
 make_client (void)
 {
+	int fd;
 	socklen_t socklen;
 	struct client *cp;
+	struct sockaddr_in addr;
+
+	fd = accept (listen_fd, (struct sockaddr *) &addr, &socklen);
+	if (fd < 0) {
+		fprintf (stderr, "strange accept error: %s\n", strerror (errno));
+		return;
+	}
 
 	cp = calloc (1, sizeof *cp);
 
+	cp->fd = fd;
+	cp->addr = addr;
 	socklen = sizeof cp->addr;
-	cp->fd = accept (listen_fd, (struct sockaddr *) &cp->addr, &socklen);
 	fcntl (cp->fd, F_SETFL, O_NONBLOCK);
 	cp->next = &client_head;
 	cp->prev = client_head.prev;
@@ -52,9 +79,29 @@ make_client (void)
 }
 
 void
-handle_output (struct client *cp)
+handle_client (struct client *cp)
 {
 	int thistime, n;
+	char inbuf[1000];
+
+	while (1) {
+		n = read (cp->fd, inbuf, sizeof inbuf);
+		if (n < 0) {
+			if (errno == EAGAIN)
+				break;
+
+			fprintf (stderr, "strange read error: %s\n",
+				 strerror (errno));
+			cp->kill = 1;
+			return;
+		}
+
+		if (n == 0) {
+			fprintf (stderr, "EOF from client\n");
+			cp->kill = 1;
+			return;
+		}
+	}
 
 	while (cp->in != cp->out) {
 		if (cp->out < cp->in) {
@@ -173,6 +220,8 @@ main (int argc, char **argv)
 	fclose (f);
 
 	while (1) {
+		cleanup_clients ();
+
 		maxfd = 0;
 
 		FD_ZERO (&rset);
@@ -191,6 +240,7 @@ main (int argc, char **argv)
 				if (cp->fd > maxfd)
 					maxfd = cp->fd;
 				FD_SET (cp->fd, &wset);
+				FD_SET (cp->fd, &rset);
 			}
 		}
 
@@ -205,7 +255,7 @@ main (int argc, char **argv)
 			handle_input ();
 
 		for (cp = client_head.next; cp != &client_head; cp = cp->next) {
-			handle_output (cp);
+			handle_client (cp);
 		}
 	}
 
