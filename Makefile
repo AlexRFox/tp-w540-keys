@@ -1,3 +1,10 @@
+CFLAGS = -g -Wall
+
+all: rasp
+
+rasp: rasp.o
+	$(CC) $(CFLAGS) -o rasp rasp.o
+
 keytable: keytable.c parse.h
 
 parse.h: /usr/include/linux/input.h
