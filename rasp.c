@@ -158,7 +158,7 @@ handle_input (void)
 			continue;
 		}
 
-		sprintf (buf, "value %d code %d\n", ev.value, ev.code);
+		sprintf (buf, "kbd0 %d %d\n", ev.value, ev.code);
 		printf ("%s", buf);
 		len = strlen (buf);
 		for (cp = client_head.next; cp != &client_head; cp = cp->next) {
