@@ -5,3 +5,4 @@ keytable
 PORT
 *.o
 rasp
+keyread
