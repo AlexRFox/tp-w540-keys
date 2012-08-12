@@ -154,8 +154,8 @@ handle_input (void)
 			exit (1);
 		}
 
-		if (ev.value == 1 && ev.code == 16) {
-			valgrind_cleanup ();
+		if (ev.value > 1 || ev.code == 0) {
+			continue;
 		}
 
 		sprintf (buf, "value %d code %d\n", ev.value, ev.code);
