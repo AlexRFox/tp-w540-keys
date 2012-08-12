@@ -196,6 +196,7 @@ main (int argc, char **argv)
 	socklen_t addrlen;
 	int c, port, maxfd;
 	FILE *f;
+	char *kbd;
 	fd_set rset, wset;
 
 	while ((c = getopt (argc, argv, "")) != EOF) {
@@ -205,13 +206,18 @@ main (int argc, char **argv)
 		}
 	}
 
+	if (optind >= argc)
+		usage ();
+
+	kbd = argv[optind++];
+
 	if (optind != argc)
 		usage ();
 
 	client_head.next = &client_head;
 	client_head.prev = &client_head;
 
-	if ((input_fd = open ("/dev/input/event3", O_RDONLY)) < 0) {
+	if ((input_fd = open (kbd, O_RDONLY)) < 0) {
 		fprintf (stderr, "cannot open keyboard\n");
 		exit (1);
 	}
