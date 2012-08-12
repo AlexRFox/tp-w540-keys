@@ -21,7 +21,7 @@ process (char *buf)
 {
 	int value, code;
 
-	if (sscanf (buf, "kbd %d %d", &value, &code) == 2)
+	if (sscanf (buf, "kbd0 %d %d", &value, &code) == 2)
 		printf ("%d, %d\n", value, code);
 }
 
