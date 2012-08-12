@@ -31,6 +31,12 @@ usage (void)
 }
 
 void
+valgrind_cleanup (void)
+{
+	exit (0);
+}
+
+void
 cleanup_clients (void)
 {
 	struct client *cp, *ncp;
@@ -146,6 +152,10 @@ handle_input (void)
 		if (n < sizeof ev) {
 			fprintf (stderr, "unexpected input buffer size\n");
 			exit (1);
+		}
+
+		if (ev.value == 1 && ev.code == 16) {
+			valgrind_cleanup ();
 		}
 
 		sprintf (buf, "value %d code %d\n", ev.value, ev.code);
