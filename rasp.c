@@ -219,6 +219,15 @@ main (int argc, char **argv)
 	fcntl (input_fd, F_SETFL, O_NONBLOCK);
 
 	listen_fd = socket (AF_INET, SOCK_STREAM, 0);
+	for (port = 9195; port <= 9200; port++) {
+		memset (&addr, 0, sizeof addr);
+		addr.sin_family = AF_INET;
+		addr.sin_port = htons (port);
+		if (bind (listen_fd,
+			  (struct sockaddr *) &addr, sizeof addr) >= 0) {
+			break;
+		}
+	}
 	listen (listen_fd, 5);
 	addrlen = sizeof addr;
 	getsockname (listen_fd, (struct sockaddr *) &addr, &addrlen);
