@@ -11,9 +11,12 @@
 #include <sys/time.h>
 #include <math.h>
 
-#define TIMEOUT 50
-
-double last_bell;
+enum {
+	BELL = 44,
+	SAFETY = 45,
+	BIGRED = 74,
+	DOOR = 104,
+};
 
 void
 usage (void)
@@ -34,54 +37,30 @@ void
 process (char *buf)
 {
 	int value, code;
-	char cmd[1000];
 
 	if (sscanf (buf, "kbd0 %d %d", &value, &code) == 2) {
 		printf ("btn %d %s\n", code, value ? "pressed" : "released");
 		switch (code) {
-		/* case 10: */
-		/* 	system ("notify-send 'doorbell!'"); */
-		/* 	printf ("doorbell!\n"); */
-		/* 	last_bell = now; */
-		/* 	break; */
-		/* case 106: */
-		/* 	if (value == 1) { */
-		/* 		system ("notify-send 'door opened!'"); */
-		/* 	} else { */
-		/* 		system ("notify-send 'door closed!'"); */
-		/* 	} */
+		case BELL:
+			if (value)
+				system ("notify-send 'doorbell!'");
+			break;
+		case DOOR:
+			if (value)
+				system ("notify-send 'door opened!'");
+			else
+				system ("notify-send 'door closed!'");
 
-		/* 	break; */
-		/* case 110: */
-		/* 	if (value) */
-		/* 		system ("cmus-remote -u"); */
-		/* 	break; */
-		/* default: */
-		/* 	break; */
-		case 73:			
-			sprintf (cmd, "echo key %d was %s on `date` >> %d.log",
-				 code, value ? "pressed" : "released", code);
-			system (cmd);
 			break;
-		case 83:
-			sprintf (cmd, "echo key %d was %s on `date` >> %d.log",
-				 code, value ? "pressed" : "released", code);
-			system (cmd);
+		case BIGRED:
+			if (value)
+				system ("cmus-remote -u");
 			break;
-		case 25:
-			sprintf (cmd, "echo key %d was %s on `date` >> %d.log",
-				 code, value ? "pressed" : "released", code);
-			system (cmd);
-			break;
-		case 50:
-			sprintf (cmd, "echo key %d was %s on `date` >> %d.log",
-				 code, value ? "pressed" : "released", code);
-			system (cmd);
-			break;
-		case 9:
-			sprintf (cmd, "echo key %d was %s on `date` >> %d.log",
-				 code, value ? "pressed" : "released", code);
-			system (cmd);
+		case SAFETY:
+			if (value)
+				system ("notify-send 'pressed'");
+			else
+				system ("notify-send 'releasedish'");
 			break;
 		default:
 			break;
@@ -113,8 +92,6 @@ main (int argc, char **argv)
 
 	if (optind != argc)
 		usage ();
-
-	last_bell = get_secs ();
 
 	hp = gethostbyname (hostname); 
 	if (hp == NULL) {
