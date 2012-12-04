@@ -26,7 +26,7 @@ struct client client_head;
 void
 usage (void)
 {
-	fprintf (stderr, "usage: rasp\n");
+	fprintf (stderr, "usage: rasp kbd\n");
 	exit (1);
 }
 

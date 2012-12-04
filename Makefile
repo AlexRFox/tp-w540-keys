@@ -1,15 +1,15 @@
 CFLAGS = -g -Wall
 
-all: rasp keyread
+all: keycast keyread
 
-rasp: rasp.o
-	$(CC) $(CFLAGS) -o rasp rasp.o
+keycast: keycast.o
+	$(CC) $(CFLAGS) -o keycast keycast.o
 
 keyread: keyread.o
 	$(CC) $(CFLAGS) -o keyread keyread.o
 
-valgrind: rasp
-	valgrind --leak-check=full --show-reachable=yes ./rasp
+valgrind: keycast
+	valgrind --leak-check=full --show-reachable=yes ./keycast
 
 clean:
-	rm -f rasp *~ *.o
+	rm -f keycast *~ *.o
