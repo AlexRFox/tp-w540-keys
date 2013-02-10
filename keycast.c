@@ -7,10 +7,11 @@
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 
 #define RB_SIZE 1000
 
-int listen_fd, input_fd;
+int listen_fd;
 
 struct client {
 	struct client *next;
@@ -23,11 +24,45 @@ struct client {
 
 struct client client_head;
 
+struct keyboard {
+	struct keyboard *next;
+	int fd, num;
+	char *name;
+};
+
+struct keyboard *kbd_head;
+
 void
 usage (void)
 {
-	fprintf (stderr, "usage: rasp kbd\n");
+	fprintf (stderr, "usage: rasp KBD...\n");
 	exit (1);
+}
+
+void *
+xcalloc (unsigned int a, unsigned int b)
+{
+	void *p;
+
+	if ((p = calloc (a, b)) == NULL) {
+		fprintf (stderr, "memory error\n");
+		exit (1);
+	}
+
+	return (p);
+}
+
+char *
+xstrdup (const char *old)
+{
+	char *new;
+
+	if ((new = strdup (old)) == NULL) {
+		fprintf (stderr, "out of memory\n");
+		exit (1);
+	}
+
+	return (new);
 }
 
 void
@@ -55,6 +90,31 @@ cleanup_clients (void)
 }
 
 void
+make_kbd (char *kbd, int kid)
+{
+	struct keyboard *kp;
+
+	kp = xcalloc (1, sizeof *kp);
+
+	kp->name = xstrdup (kbd);
+	kp->num = kid;
+
+	if ((kp->fd = open (kp->name, O_RDONLY)) < 0) {
+		fprintf (stderr, "cannot open keyboard: %s\n", kp->name);
+		exit (1);
+	}
+
+	fcntl (kp->fd, F_SETFL, O_NONBLOCK);
+
+	if (!kbd_head) {
+		kbd_head = kp;
+	} else {
+		kp->next = kbd_head;
+		kbd_head = kp;
+	}
+}
+
+void
 make_client (void)
 {
 	int fd;
@@ -64,11 +124,12 @@ make_client (void)
 
 	fd = accept (listen_fd, (struct sockaddr *) &addr, &socklen);
 	if (fd < 0) {
-		fprintf (stderr, "strange accept error: %s\n", strerror (errno));
+		fprintf (stderr, "strange accept error: %s\n",
+			 strerror (errno));
 		return;
 	}
 
-	cp = calloc (1, sizeof *cp);
+	cp = xcalloc (1, sizeof *cp);
 
 	cp->fd = fd;
 	cp->addr = addr;
@@ -131,7 +192,7 @@ handle_client (struct client *cp)
 }
 
 void
-handle_input (void)
+handle_input (struct keyboard *kp)
 {
 	struct input_event ev;
 	struct client *cp;
@@ -140,7 +201,7 @@ handle_input (void)
 	int n, len, used, togo, thistime;
 
 	while (1) {
-		n = read (input_fd, &ev, sizeof ev);
+		n = read (kp->fd, &ev, sizeof ev);
 		if (n < 0 && errno != EAGAIN) {
 			fprintf (stderr, "input error: %s\n", strerror (errno));
 			exit (1);
@@ -158,7 +219,7 @@ handle_input (void)
 			continue;
 		}
 
-		sprintf (buf, "kbd0 %d %d\n", ev.value, ev.code);
+		sprintf (buf, "kbd%d: %d %d\n", kp->num, ev.value, ev.code);
 		printf ("%s", buf);
 		len = strlen (buf);
 		for (cp = client_head.next; cp != &client_head; cp = cp->next) {
@@ -193,10 +254,11 @@ main (int argc, char **argv)
 {
 	struct sockaddr_in addr;
 	struct client *cp;
+	struct keyboard *kp;
 	socklen_t addrlen;
-	int c, port, maxfd;
+	int c, port, maxfd, idx, kid;
 	FILE *f;
-	char *kbd;
+	char *s;
 	fd_set rset, wset;
 
 	while ((c = getopt (argc, argv, "")) != EOF) {
@@ -209,20 +271,32 @@ main (int argc, char **argv)
 	if (optind >= argc)
 		usage ();
 
-	kbd = argv[optind++];
-
-	if (optind != argc)
+	if (optind == argc)
 		usage ();
+
+	kid = 0;
+	for (idx = optind; idx < argc; idx++) {
+		s = xstrdup (argv[idx]);
+
+		make_kbd (s, kid++);
+
+		free (s);
+	}
+
+	/* kbd = argv[optind++]; */
+
+	/* if (optind != argc) */
+	/* 	usage (); */
 
 	client_head.next = &client_head;
 	client_head.prev = &client_head;
 
-	if ((input_fd = open (kbd, O_RDONLY)) < 0) {
-		fprintf (stderr, "cannot open keyboard\n");
-		exit (1);
-	}
+	/* if ((input_fd = open (kbd, O_RDONLY)) < 0) { */
+	/* 	fprintf (stderr, "cannot open keyboard\n"); */
+	/* 	exit (1); */
+	/* } */
 
-	fcntl (input_fd, F_SETFL, O_NONBLOCK);
+	/* fcntl (input_fd, F_SETFL, O_NONBLOCK); */
 
 	listen_fd = socket (AF_INET, SOCK_STREAM, 0);
 	for (port = 9195; port <= 9200; port++) {
@@ -256,9 +330,14 @@ main (int argc, char **argv)
 			maxfd = listen_fd;
 		FD_SET (listen_fd, &rset);
 
-		if (input_fd > maxfd)
-			maxfd = input_fd;
-		FD_SET (input_fd, &rset);
+		for (kp = kbd_head; kp; kp = kp->next) {
+			if (kp->fd > maxfd)
+				maxfd = kp->fd;
+			FD_SET (kp->fd, &rset);
+		}
+		/* if (input_fd > maxfd) */
+		/* 	maxfd = input_fd; */
+		/* FD_SET (input_fd, &rset); */
 
 		for (cp = client_head.next; cp != &client_head; cp = cp->next) {
 			if (cp->in != cp->out) {
@@ -276,8 +355,11 @@ main (int argc, char **argv)
 
 		if (FD_ISSET (listen_fd, &rset))
 			make_client ();
-		if (FD_ISSET (input_fd, &rset))
-			handle_input ();
+
+		for (kp = kbd_head; kp; kp = kp->next) {
+			if (FD_ISSET (kp->fd, &rset))
+				handle_input (kp);
+		}
 
 		for (cp = client_head.next; cp != &client_head; cp = cp->next) {
 			handle_client (cp);

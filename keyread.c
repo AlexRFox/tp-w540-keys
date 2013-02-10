@@ -36,10 +36,11 @@ get_secs (void)
 void
 process (char *buf)
 {
-	int value, code;
+	int num, value, code;
 
-	if (sscanf (buf, "kbd0 %d %d", &value, &code) == 2) {
-		printf ("btn %d %s\n", code, value ? "pressed" : "released");
+	if (sscanf (buf, "kbd%d: %d %d", &num, &value, &code) == 3) {
+		printf ("kbd%d: btn %d %s\n", num, code,
+			value ? "pressed" : "released");
 		switch (code) {
 		case BELL:
 			if (value)
@@ -102,6 +103,7 @@ main (int argc, char **argv)
 	sock = socket (AF_INET, SOCK_STREAM, 0);
 	win = 0;
 	for (port = 9195; port <= 9200; port++) {
+		printf ("connecting to %s on port %d\n", hostname, port);
 		memset (&addr, 0, sizeof addr);
 		addr.sin_family = AF_INET;
 		memcpy (&addr.sin_addr, hp->h_addr, sizeof addr.sin_addr);
