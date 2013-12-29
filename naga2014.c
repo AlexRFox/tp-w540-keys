@@ -41,7 +41,7 @@ Display *dpy;
 void
 usage (void)
 {
-	fprintf (stderr, "usage: naga2014 KBD...\n");
+	fprintf (stderr, "usage: naga2014\n");
 	exit (1);
 }
 
@@ -164,7 +164,7 @@ int
 main (int argc, char **argv)
 {
 	struct keyboard *kp;
-	int c, maxfd, idx, kid, code;
+	int c, maxfd, idx, code;
 	char *s, *conf, line[1000], *p;
 	fd_set rset, wset;
 	FILE *fp;
@@ -179,20 +179,8 @@ main (int argc, char **argv)
 		}
 	}
 
-	if (optind >= argc)
-		usage ();
-
-	if (optind == argc)
-		usage ();
-
-	kid = 0;
-	for (idx = optind; idx < argc; idx++) {
-		s = xstrdup (argv[idx]);
-
-		make_kbd (s, kid++);
-
-		free (s);
-	}
+	make_kbd ("/dev/input/by-id/usb-Razer_Razer_Naga_2014-if02-event-kbd",
+		  0);
 
 	fp = fopen (conf, "r");
 

@@ -14,15 +14,15 @@
 # leave the right side blank to skip mapping any keys
 # sym=
 #
-sym=
-sym=
+sym=F13
+sym=F14
 sym=XF86Forward
-sym=
-sym=
+sym=F16
+sym=F17
 sym=XF86Back
-sym=
-sym=
-sym=
-sym=
-sym=
-sym=
+sym=F19
+sym=F20
+sym=F21
+sym=F22
+sym=F23
+sym=F24
