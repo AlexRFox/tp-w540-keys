@@ -1,15 +1,9 @@
 CFLAGS = -g -Wall
 
-all: keycast keyread
+all: naga2014
 
-keycast: keycast.o
-	$(CC) $(CFLAGS) -o keycast keycast.o
-
-keyread: keyread.o
-	$(CC) $(CFLAGS) -o keyread keyread.o
-
-valgrind: keycast
-	valgrind --leak-check=full --show-reachable=yes ./keycast
+naga2014: naga2014.o
+	$(CC) $(CFLAGS) -o naga2014 naga2014.o
 
 clean:
-	rm -f keycast *~ *.o
+	rm -f naga2014 *~ *.o
