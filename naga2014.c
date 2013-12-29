@@ -27,6 +27,7 @@
 #include <limits.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XTest.h>
+#include <sys/capability.h>
 
 struct keyboard {
 	struct keyboard *next;
@@ -168,6 +169,7 @@ main (int argc, char **argv)
 	char *s, *conf, line[1000], *p;
 	fd_set rset, wset;
 	FILE *fp;
+	cap_t cap_p;
 
 	dpy = XOpenDisplay(NULL);
 	conf = "btnmap";
@@ -179,9 +181,16 @@ main (int argc, char **argv)
 		}
 	}
 
+	cap_value_t cap[1];
+	cap[0] = CAP_DAC_OVERRIDE;
+	cap_p = cap_get_proc ();
 	make_kbd ("/dev/input/by-id/usb-Razer_Razer_Naga_2014-if02-event-kbd",
 		  0);
-
+	cap_clear (cap_p);
+	cap_set_flag (cap_p, CAP_EFFECTIVE, 1, cap, CAP_CLEAR);
+	cap_set_flag (cap_p, CAP_PERMITTED, 1, cap, CAP_CLEAR);
+	cap_set_proc (cap_p);
+				      
 	fp = fopen (conf, "r");
 
 	for (idx = 0; idx < 12; idx++) {
