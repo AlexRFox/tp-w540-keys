@@ -6,6 +6,8 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/XTest.h>
 
 struct keyboard {
 	struct keyboard *next;
@@ -14,6 +16,7 @@ struct keyboard {
 };
 
 struct keyboard *kbd_head;
+Display *dpy;
 
 void
 usage (void)
@@ -107,6 +110,16 @@ handle_input (struct keyboard *kp)
 
 		sprintf (buf, "kbd%d: %d %d\n", kp->num, ev.value, ev.code);
 		printf ("%s", buf);
+
+		if (ev.code == 2 && ev.value == 1) {
+			printf ("fake down\n");
+			XTestFakeKeyEvent (dpy, 167, True, CurrentTime);
+		} else if (ev.code == 2 && ev.value == 0) {
+			printf ("fake up\n");
+			XTestFakeKeyEvent (dpy, 167, False, CurrentTime);
+		}
+
+		XFlush (dpy);
 	}
 }
 
@@ -117,6 +130,8 @@ main (int argc, char **argv)
 	int c, maxfd, idx, kid;
 	char *s;
 	fd_set rset, wset;
+
+	dpy = XOpenDisplay(NULL);
 
 	while ((c = getopt (argc, argv, "")) != EOF) {
 		switch (c) {
