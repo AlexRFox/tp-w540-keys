@@ -124,7 +124,6 @@ void
 handle_input (struct keyboard *kp)
 {
 	struct input_event ev;
-	char buf[1000];
 	int n;
 
 	while (1) {
@@ -146,8 +145,8 @@ handle_input (struct keyboard *kp)
 			continue;
 		}
 
-		sprintf (buf, "kbd%d: %d %d\n", kp->num, ev.value, ev.code);
-		printf ("%s", buf);
+		if (buttons[ev.code-2] == -1)
+			continue;
 
 		if (ev.value == 1) {
 			XTestFakeKeyEvent (dpy, buttons[ev.code-2],
@@ -200,6 +199,11 @@ main (int argc, char **argv)
 	for (idx = 0; idx < 12; idx++) {
 		fgets (line, sizeof line, fp);
 
+		if (*line == '#' || strlen (line) == 1) {
+			idx--;
+			continue;
+		}
+
 		if (line == NULL) {
 			fprintf (stderr, "invalid config file\n");
 			return (1);
@@ -222,6 +226,11 @@ main (int argc, char **argv)
 			p++;
 
 		*p = 0;
+
+		if (strlen (s) < 1) {
+			buttons[idx] = -1;
+			continue;
+		}
 
 		if (strcmp (line, "code") == 0) {
 			code = atoi (s);

@@ -1,12 +1,28 @@
-sym=1
-sym=2
-sym=3
-sym=4
-sym=5
-sym=6
-sym=7
-sym=8
-sym=9
-sym=0
-sym=minus
-sym=equal
+# format:
+# comments must start with has
+# sym=1 will fetch the keycode for the keysym "1"
+# code=96 will directly input the keycode
+# must have 12 non-comment lines, one for each button
+#
+# sym values are plugged directly into XStringToKeysym then
+#  XKeysymToKeycode to get the codes, code values are plugged directly
+#  into XTestFakeKeyEvent
+#
+# code=38
+# sym=a
+#
+# leave the right side blank to skip mapping any keys
+# sym=
+#
+sym=
+sym=
+sym=XF86Forward
+sym=
+sym=
+sym=XF86Back
+sym=
+sym=
+sym=
+sym=
+sym=
+sym=
