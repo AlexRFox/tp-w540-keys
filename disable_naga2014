@@ -1,0 +1,5 @@
+#! /bin/sh
+
+ID=`xinput list | sed -n 's/.*Naga.*id=\([0-9]*\).*keyboard.*/\1/p'`
+
+xinput disable $ID
