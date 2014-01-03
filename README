@@ -1,0 +1,22 @@
+To install:
+
+make naga2014
+sudo make install
+
+Add disable_naga2014 and naga2014 to your startup processes for after
+your X session starts.
+
+Both disable_naga2014 and naga2014 will need to be rerun if the mouse
+is removed and plugged back in.
+
+If there aren't enough empty slots in your xmodmap configuration, this
+will not map all function keys that naga2014 relies on, causing
+naga2014 to crash for high valued keys. This can be fixed by manually
+going through xmodmap and making sure F13-F24 all have keycodes.
+
+This has not been thoroughly tested and might cause your computer to
+crash or keyboard to lock up. Virtual terminals should still work even
+if your keyboard is locked up in X, Ctr-Alt-F2 to get to one of them
+and you should be able to fix your setup from there. You'll probably
+just want to remove whatever auto-run thing is active and restart your
+display manager.
