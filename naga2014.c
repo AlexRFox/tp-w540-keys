@@ -166,13 +166,18 @@ main (int argc, char **argv)
 {
 	struct keyboard *kp;
 	int c, maxfd, idx, code;
-	char *s, *conf, line[1000], *p;
+	char *s, *conf, *conf_file, *homedir, line[1000], *p;
 	fd_set rset, wset;
 	FILE *fp;
 	cap_t cap_p;
 
 	dpy = XOpenDisplay(NULL);
-	conf = "btnmap";
+
+	homedir = getenv ("HOME");
+	conf = ".btnmap";
+	conf_file = xcalloc (strlen (homedir) + strlen (conf) + 10,
+			     sizeof *conf_file);
+	sprintf (conf_file, "%s/%s", homedir, conf);
 
 	while ((c = getopt (argc, argv, "")) != EOF) {
 		switch (c) {
@@ -191,7 +196,7 @@ main (int argc, char **argv)
 	cap_set_flag (cap_p, CAP_PERMITTED, 1, cap, CAP_CLEAR);
 	cap_set_proc (cap_p);
 				      
-	fp = fopen (conf, "r");
+	fp = fopen (conf_file, "r");
 
 	for (idx = 0; idx < 12; idx++) {
 		fgets (line, sizeof line, fp);

@@ -15,6 +15,7 @@ caps: naga2014
 
 install: naga2014 gen-xmodmap caps
 	fix-xmodmap.sh
+	cp `pwd`/btnmap ~/.btnmap
 
 clean:
 	rm -f naga2014 *~ *.o
